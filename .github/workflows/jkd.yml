@@ -1,16 +1,16 @@
 # This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: ju看点
+name: jukandian
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '0 0 * * *'
   watch:
     types: started
   repository_dispatch:
-    types: kkd
+    types: xp
 jobs:
   build:
 
@@ -19,8 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        #with:
-         # repository: ZhiYi-N/script
+       # with:
+          #repository: Task/
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -35,11 +35,12 @@ jobs:
       - name: npm install
         run: |
           npm install
-      - name: '运行 【ju看点】'
+      - name: '运行 【笑谱】'
         run: |
-          node jkd.js
+          node jkd.js 
         env:
-          JKD_COOKIE: ${{ secrets.JKD_COOKIE }
+          JKD_COOKIE: ${{ secrets.JKD_COOKIE }}
+          #GOLDBODY: ${{ secrets.GOLDBODY}}
           PUSH_KEY: ${{ secrets.PUSH_KEY }}
           BARK_PUSH: ${{ secrets.BARK_PUSH }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
