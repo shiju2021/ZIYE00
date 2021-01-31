@@ -39,8 +39,8 @@ jobs:
         run: |
           node Task/iboxpay.js
         env:
-          XP_iboxpayHEADER: ${{ secrets.XP_iboxpayHEADER }}
-          XP_refreshTOKEN: ${{ secrets.XP_refreshTOKEN }}
+          XP_iboxpayHEADER: ${{ secrets.XP_IBOXPAYHEADER }}
+          XP_refreshTOKEN: ${{ secrets.XP_REFRESHTOKEN }}
           #GOLDBODY: ${{ secrets.GOLDBODY}}
           PUSH_KEY: ${{ secrets.PUSH_KEY }}
           BARK_PUSH: ${{ secrets.BARK_PUSH }}
