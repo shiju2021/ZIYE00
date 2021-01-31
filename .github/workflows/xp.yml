@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: ZhiYi-N/script
+          repository: ZIYE00/Task
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -37,11 +37,11 @@ jobs:
           npm install
       - name: '运行 【笑谱】'
         run: |
-          node xp.js
+          node iboxpay.js
         env:
-          VIDEOHEADER: ${{ secrets.VIDEOHEADER }}
-          VIDEOBODY: ${{ secrets.VIDEOBODY }}
-          GOLDBODY: ${{ secrets.GOLDBODY}}
+          XP_iboxpayHEADER: ${{ secrets.XP_iboxpayHEADER }}
+          XP_refreshTOKEN: ${{ secrets.XP_refreshTOKEN }}
+          #GOLDBODY: ${{ secrets.GOLDBODY}}
           PUSH_KEY: ${{ secrets.PUSH_KEY }}
           BARK_PUSH: ${{ secrets.BARK_PUSH }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
