@@ -27,7 +27,7 @@ if ($.isNode()) {
   else if (process.env.JUKAN_BODY && process.env.JUKAN_BODY.indexOf('\n') > -1) {
   JKbody = process.env.JUKAN_BODY.split('\n');
   } else {
-  //JKbody = process.env.JUKAN_BODY.split()
+  JKbody = process.env.JUKAN_BODY.split()
   }
   Object.keys(JKbody).forEach((item) => {
         if (JKbody[item]) {
