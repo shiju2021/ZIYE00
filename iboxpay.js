@@ -26,6 +26,7 @@ boxjs链接  https://raw.githubusercontent.com/ziye12/JavaScript/main/Task/ziye.
 1.30-3 增加提现
 1.31 增加180秒任务,优先直播，修改直播金币显示
 1.31-2 调整判定
+2.1 增加CK获取时间
 
 ⚠️一共2个位置 2个ck  👉 3条 Secrets 
 多账号换行
@@ -82,7 +83,7 @@ http-request https:\/\/veishop\.iboxpay\.com\/nf_gateway\/nf-user-auth-web\/igno
 const $ = Env("笑谱");
 $.idx = ($.idx = ($.getval('iboxpaySuffix') || '1') - 1) > 0 ? ($.idx + 1 + '') : ''; // 账号扩展字符
 const notify = $.isNode() ? require("./sendNotify") : ``;
-//const COOKIE = $.isNode() ? require("./iboxpayCOOKIE") : ``;
+const COOKIE = $.isNode() ? require("./iboxpayCOOKIE") : ``;
 const logs = 0; // 0为关闭日志，1为开启
 const notifyttt = 1// 0为关闭外部推送，1为12 23 点外部推送
 const notifyInterval = 2;// 0为关闭通知，1为所有通知，2为12 23 点通知  ， 3为 6 12 18 23 点通知 
@@ -284,12 +285,14 @@ oldtime=traceid.substr(traceid.indexOf("161"),13);
   O = (`${$.name + (i + 1)}🔔`);
   await console.log(`-------------------------\n\n🔔开始运行【${$.name+(i+1)}】`)
 
+console.log('CK获取时间:'+time(Number(oldtime)))
 
 await refreshtoken() ;//更新TOKEN
 let cookie_is_live = await user(i + 1);//用户名
     if (!cookie_is_live) {
       continue;
-    }       
+    }   
+      await cktime()
       await goldcoin();//金币信息
 	  await coin();//账户信息
 	  await hdid();//活动id
@@ -338,8 +341,21 @@ function msgShow() {
 	resolve()
   })
 }
+function cktime() {
+$.message +='【CK获取时间】：'+time(Number(oldtime))+'\n'
+};
 
-
+function time(inputTime) {
+  var date = new Date(inputTime);
+  Y = date.getFullYear() + '-';
+  M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+  D = date.getDate() + ' ';
+  h = date.getHours() + ':';
+  m = date.getMinutes() + ':';
+  s = date.getSeconds();
+  
+  return Y+M+D+h+m+s;
+};
 //TOKEN更新  
 function refreshtoken(timeout = 0) {
   return new Promise((resolve) => {
