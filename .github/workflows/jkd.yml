@@ -39,7 +39,7 @@ jobs:
         run: |
           node jkd.js 
         env:
-          JKD_COOKIE: ${{ secrets.JKD_COOKIE }}
+          JUKAN_BODY: ${{ secrets.JUKAN_BODY }}
           #GOLDBODY: ${{ secrets.GOLDBODY}}
           PUSH_KEY: ${{ secrets.PUSH_KEY }}
           BARK_PUSH: ${{ secrets.BARK_PUSH }}
