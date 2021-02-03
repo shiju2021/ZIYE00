@@ -32,6 +32,7 @@ if ($.isNode()) {
           CookieArr.push(BDCookie[item])
         } 
     })
+  
   Object.keys(BDCASH).forEach((item) => {
         if (BDCASH[item]) {
           cashArr.push('5')
