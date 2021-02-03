@@ -35,7 +35,7 @@ if ($.isNode()) {
   
   Object.keys(BDCASH).forEach((item) => {
         if (BDCASH[item]) {
-          cashArr.push('5')
+          cashArr.push(BDCASH[item])
         } 
     })
 
