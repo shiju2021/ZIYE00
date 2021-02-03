@@ -415,7 +415,7 @@ function AutoRead() {
         if (logs == 1) $.log(data)
         $.log(`【本次阅读${$.index}】：账号异常❌\n请评论,点赞,上传视频...并禁用脚本观察`)
         tz += `【本次阅读${$.index}】：账号异常❌\n`;
-      } else if (typeof readres.data.score === 'number') {
+      } else if (typeof readres.data.score == 'number') {
         if (logs == 1) $.log(data)
         let randomtime = Randomtime(21000,60000) / 1000
         await $.wait(Randomtime(21000,60000));
