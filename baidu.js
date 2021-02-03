@@ -38,7 +38,6 @@ if ($.isNode()) {
           cashArr.push(BDCASH[item])
         } 
     })
-
 } else {
     CookieArr.push($.getdata(`chavy_cookie_tieba`) || $.getdata(`CookieTB`))
     cashArr.push($.getdata("cash_baidu")||5)
