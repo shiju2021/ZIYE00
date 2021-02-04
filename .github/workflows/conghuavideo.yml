@@ -1,0 +1,60 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+
+
+name: conghuavideo(葱花自动刷视频)
+
+on:
+  workflow_dispatch:
+  # 目前运行3000金币左右上限，body不用抓太多没有意义,cron自己看着写
+  schedule:
+     - cron: '0 */3 * * *'
+  watch:
+    types: started
+jobs:
+  build:
+    env:
+      RONGHUA_VIDEO: ${{ secrets.RONGHUA_VIDEO }}
+      RONGHUA_VIDEO2: ${{ secrets.RONGHUA_VIDEO2 }}
+      RONGHUA_VIDEO3: ${{ secrets.RONGHUA_VIDEO3 }}
+      RONGHUA_VIDEO4: ${{ secrets.RONGHUA_VIDEO4 }}
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: npm install
+        run: |
+          npm install
+
+      - name: '运行 【葱花视频账号1-视频阅读】'
+        if: env.RONGHUA_VIDEO
+        run: |
+          node RONGHUA_VIDEO.js
+        env:
+          RONGHUA_VIDEO: ${{ secrets.RONGHUA_VIDEO }}
+
+      - name: '运行 【葱花视频账号1-视频阅读2】'
+        if: env.RONGHUA_VIDEO2
+        run: |
+          node RONGHUA_VIDEO.js
+        env:
+          RONGHUA_VIDEO: ${{ secrets.RONGHUA_VIDEO2 }}
+
+      - name: '运行 【葱花视频账号2-视频阅读】'
+        if: env.RONGHUA_VIDEO3
+        run: |
+          node RONGHUA_VIDEO.js
+        env:
+          RONGHUA_VIDEO: ${{ secrets.RONGHUA_VIDEO3 }}
+
+      - name: '运行 【葱花视频账号2-视频阅读2】'
+        if: env.RONGHUA_VIDEO4
+        run: |
+          node RONGHUA_VIDEO.js
+        env:
+          RONGHUA_VIDEO: ${{ secrets.RONGHUA_VIDEO4 }}
