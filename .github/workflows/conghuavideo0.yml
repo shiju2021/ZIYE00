@@ -29,14 +29,14 @@ jobs:
       - name: '运行 【葱花视频-时段奖励】'
         if: env.TASKCENTERBODY      
         run: |
-          node Task/chonghua1.js
+          node chonghua1.js
         env:
           TASKCENTERBODY: ${{ secrets.TASKCENTERBODY }}
           TIMEREDBODY: ${{ secrets.TIMEREDBODY }}
       - name: '运行 【葱花视频-分享奖励】'
         if: env.SHAREBODY      
         run: |
-          node Task/chonghua2.js 
+          node chonghua2.js 
         env:
           TASKCENTERBODY: ${{ secrets.TASKCENTERBODY }}
           SHAREBODY: ${{ secrets.SHAREBODY }}
