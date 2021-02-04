@@ -110,7 +110,7 @@ if ($.isNode()) {
   taskcenterbodyVal = taskcenterbodyArr[0];
   O = (`🥦${jsname}任务执行通知🔔`);
   console.log(`\n✅ 打印任务状态清单`)
-  await taskcenter(); //任务中心
+  //await taskcenter(); //任务中心
   if (!sharebodyArr[0]) {
     console.log($.name, '【提示】请把分享视频的请求体填入Github 的 Secrets 中，请以#隔开')
     return;
