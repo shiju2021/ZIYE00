@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   # 目前运行3000金币左右上限，body不用抓太多没有意义,cron自己看着写
   schedule:
-     - cron: '0 */3 * * *'
+     - cron: '0 */6 8-20 * *'
   watch:
     types: started
 jobs:
