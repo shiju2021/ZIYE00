@@ -55,7 +55,6 @@ if (isGetCookie) {
    $.done()
 } 
 if ($.isNode()) {
-/*
    if (process.env.HSURL && process.env.HSURL.indexOf('#') > -1) {
    hsurl = process.env.HSURL.split('#');
    console.log(`您选择的是用"#"隔开\n`)
@@ -115,7 +114,6 @@ if (process.env.PLAYURL && process.env.PLAYURL.indexOf('#') > -1) {
    console.log(`您选择的是用换行隔开\n`)
   } else {
    playbody = process.env.PLAYBODY.split()
-	  */
  
   };
     console.log(`============ 脚本执行-国际标准时间(UTC)：${new Date().toLocaleString()}  =============\n`)
