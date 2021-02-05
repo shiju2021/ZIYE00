@@ -281,7 +281,7 @@ async function sharevideo(){
 
 }
 
-/*
+
 
 //任务中心
 function taskcenter() {
@@ -309,7 +309,7 @@ function taskcenter() {
     })
   })
 }
-*/
+
 
 //今日金币
 function todaycoin() {
