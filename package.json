@@ -1,0 +1,30 @@
+{
+  "name": "Sunert",
+  "version": "1.0.0",
+  "description": "",
+  "main": "jingxi.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yyxiaoqing/Actions.git"
+  },
+  "keywords": ["中青看点,等等"],
+  "author": "Sunert",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yyxiaoqing/Actions/issues"
+  },
+  "homepage": "https://github.com/yyxiaoqing/Actionss#readme",
+  "dependencies": {
+    "crypto-js": "^4.0.0",
+    "got": "^11.7.0",
+    "http-server": "^0.12.3",
+    "tough-cookie": "^4.0.0",
+    "node-schedule": "^1.3.2",
+    "request": "^2.88.2",
+    "axios": "^0.19.2",
+    "download": "^8.0.0"
+  }
+}
