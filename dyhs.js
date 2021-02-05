@@ -26,12 +26,12 @@ const notify = $.isNode() ?require('./sendNotify') : '';
 let status;
 status = (status = ($.getval("hsstatus") || "1") ) > 1 ? `${status}` : ""; // 账号扩展字符
 const hsheaderArr = [],hsbodyArr = [],hsurlArr = [],playurlArr = [],playheaderArr = [],playbodyArr = []
-let playurl = $.getdata('playurl')
-let playheader = $.getdata('playheader')
-let playbody = $.getdata('playbody')
-let hsurl = $.getdata('hsurl')
-let hsheader = $.getdata('hsheader')
-let hsbody = $.getdata('hsbody')
+let playurl = process.env.PLAYURL
+let playheader = process.env.PLAYHEADER
+let playbody = process.env.PLAYBODY
+let hsurl = process.env.HSURL
+let hsheader = process.env.HSHEADER
+let hsbody = process.env.HSBODY
 let tz = ($.getval('tz') || '1');//0关闭通知，1默认开启
 const invite=1;//新用户自动邀请，0关闭，1默认开启
 const logs =0;//0为关闭日志，1为开启
@@ -55,6 +55,7 @@ if (isGetCookie) {
    $.done()
 } 
 if ($.isNode()) {
+/*
    if (process.env.HSURL && process.env.HSURL.indexOf('#') > -1) {
    hsurl = process.env.HSURL.split('#');
    console.log(`您选择的是用"#"隔开\n`)
@@ -114,6 +115,8 @@ if (process.env.PLAYURL && process.env.PLAYURL.indexOf('#') > -1) {
    console.log(`您选择的是用换行隔开\n`)
   } else {
    playbody = process.env.PLAYBODY.split()
+	  */
+ 
   };
     console.log(`============ 脚本执行-国际标准时间(UTC)：${new Date().toLocaleString()}  =============\n`)
     console.log(`============ 脚本执行-北京时间(UTC+8)：${new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toLocaleString()}  =============\n`)
