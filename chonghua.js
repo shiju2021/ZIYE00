@@ -54,7 +54,8 @@ now = new Date(new Date().getTime() + new Date().getTimezoneOffset()*60*1000 + 8
 
 let task = '';
 let tz = '';
-let uid = $.getdata('uid')
+//修改一下填入自己的uid
+let uid = process.env.UID
 let headerVal = {
   'User-Agent': `cong hua shi pin/1.4.6 (iPhone; iOS 14.1; Scale/2.00)`,
   'Accept': `*/*`,
@@ -68,23 +69,36 @@ let headerVal = {
 
 const taskcenterbodyArr = [];
 let taskcenterbodyVal = "";
-//let TASKCENTERBODY = [];
+let TASKCENTERBODY = [];
+
+const sharebodyArr = [];
+let sharebodyVal = "";
+let SHAREBODY = [];
+
+const sharerewardbodyArr = [];
+let sharerewardbodyVal = "";
+let SHAREREWARDBODY = [];
 
 const timeredbodyArr = [];
 let timeredbodyVal = "";
-//let TIMEREDBODY = [];
+let TIMEREDBODY = [];
+
+const readbodyArr = [];
+let readbodyVal = "";
+let READBODY = [];
 
 
 let readscore = 0;
 let sharescore = 0;
+let indexLast = $.getdata('chgetbody_video_index');
 
+$.begin = indexLast ? parseInt(indexLast, 10) : 1;
 
-////////////////////////////////////////////////////////////////////////
+  
 if ($.isNode()) {
 
   // 自定义多 cookie 之间连接的分隔符，默认为 \n 换行分割，不熟悉的不要改动和配置，为了兼容本地 node 执行
   COOKIES_SPLIT = process.env.COOKIES_SPLIT || "\n";
-
   console.log(
     `============ cookies分隔符为：${JSON.stringify(
       COOKIES_SPLIT
@@ -101,17 +115,18 @@ if ($.isNode()) {
   } else {
     readbodyVal = process.env.READBODY.split()
   }
-
-  if (process.env.SHAREREWARDBODY && process.env.SHAREREWARDBODY.indexOf('#') > -1) {
-    sharerewardbodyVal = process.env.SHAREREWARDBODY.split('#');
+  
+  if (process.env.SHAREBODY && process.env.SHAREBODY.indexOf('#') > -1) {
+    sharebodyVal = process.env.SHAREBODY.split('#');
     console.log(`您选择的是用"#"隔开\n`)
-  } else if (process.env.SHAREREWARDBODY && process.env.SHAREREWARDBODY.indexOf('\n') > -1) {
-    sharerewardbodyVal = process.env.SHAREREWARDBODY.split('\n');
+  } else if (process.env.SHAREBODY && process.env.SHAREBODY.indexOf('\n') > -1) {
+    sharebodyVal = process.env.SHAREBODY.split('\n');
     console.log(`您选择的是用换行隔开\n`)
   } else {
-    sharerewardbodyVal = process.env.SHAREREWARDBODY.split()
+    sharebodyVal = process.env.SHAREBODY.split()
   }
-  ////////////////////////////////////////////////////////////////////////
+   
+ 
   if (
     process.env.TASKCENTERBODY &&
     process.env.TASKCENTERBODY.indexOf(COOKIES_SPLIT) > -1
@@ -143,40 +158,74 @@ if ($.isNode()) {
 
 
 
-if ($.isNode()) {
 
-  Object.keys(taskcenterbodyVal).forEach((item) => {
+if ($.isNode()) {
+  
+   Object.keys(sharebodyVal).forEach((item) => {
+      if (sharebodyVal[item]) {
+       sharebodyArr.push(sharebodyVal[item])
+      }
+  });
+  
+    Object.keys(taskcenterbodyVal).forEach((item) => {
     if (taskcenterbodyVal[item]) {
       taskcenterbodyArr.push(taskcenterbodyVal[item])
     }
   });
 
-
-  Object.keys(timeredbodyVal).forEach((item) => {
+   Object.keys(sharerewardbodyVal).forEach((item) => {
+    if (sharerewardbodyVal[item]) {
+      sharerewardbodyArr.push(sharerewardbodyVal[item])
+    }
+  });
+  
+   Object.keys(readbodyVal).forEach((item) => {
+    if (readbodyVal[item]) {
+      readbodyArr.push(readbodyVal[item])
+    }
+  });
+  
+   Object.keys(timeredbodyVal).forEach((item) => {
     if (timeredbodyVal[item]) {
       timeredbodyArr.push(timeredbodyVal[item])
     }
   });
-} else {
-  //readbodyArr.push($.getdata('chgetbody_video'));
-  //sharebodyArr.push($.getdata('chgetbody_share'));
-  taskcenterbodyArr.push($.getdata('chgetbody_taskcenter'));
-  timeredbodyArr.push($.getdata('chgetbody_timered'));
-}
+  
 
+} 
 
-////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////以上是对cookie的处理，一般更行只要更行以下部分///////////////////////////////////////////////////
 
 
 !(async () => {
+     await Jsname()
+  O = (`🥦${jsname}任务执行通知🔔`);
   taskcenterbodyVal = taskcenterbodyArr[0];
   timeredbodyVal = timeredbodyArr[0];
-  O = (`🥦${jsname}任务执行通知🔔`);
-  console.log(`\n✅ 打印任务状态清单`)
-  await taskcenter(); //任务中心
+  console.log(`\n✅ 查询账户明细\n`)
+  if (uid >= 1) {
+    await todaycoin(); //box填入uid
+  } else {
+    $.msg(
+      jsname,
+      "💖请到BoxJs填写自己的邀请码,保存设置\n",
+      "点击跳转,复制链接,订阅我的BoxJs", {
+        "open-url": "https://raw.githubusercontent.com/CenBoMin/GithubSync/main/cenbomin.box.json"
+      }
+    );
+  }
 
-  console.log(`\n✅ 执行时段奖励任务`)
-  await timered(task); //时段
+  if (now.getHours() == 18){
+    await videoread();//自动刷视频
+  }else if (now.getHours() == 20){
+    await videoread();//自动刷视频
+  }else{
+    console.log(`\n✅ 打印任务状态清单`)
+    await taskcenter(); //任务中心
+    console.log(`\n✅ 执行时段奖励任务`)
+    await timered(task); //时段奖励
+    await sharevideo();//分享任务
+  }
   await showmsg();
 
 })()
@@ -194,11 +243,6 @@ function showmsg() {
 }
 
 ////////////////////////////////////////////////////////////////////////
-
-async function AC(){
-  console.log('\n\n'+'TASKCENTERBODY copy下面的值'+'\n\n'+taskcenterbodyVal+'\n\n\n\n'+'SHAREBODY copy下面的值'+'\n\n'+sharebodyVal+'\n\n\n\n'+'SHAREREWARDBODY copy下面的值'+'\n\n'+sharerewardbodyVal+'\n\n\n\n'+'TIMEREDBODY copy下面的值'+'\n\n'+timeredbodyVal+'\n\n\n\n'+'READBODY copy下面的值'+'\n\n'+readbodyVal+'\n\n')
-}
-
 async function videoread(){
   if (!readbodyArr[0]) {
     console.log($.name, '【提示】请把阅读视频的请求体填入Github 的 Secrets 中，请以#隔开')
@@ -258,6 +302,8 @@ function taskcenter() {
       $.log(`【${task.data.task_list[4].title}】:${task.data.task_list[4].button}`);
 
       //$.log(`【任务状态】:${task.data.task_list[6].status}\n`);
+
+      tz += `【现金余额】：¥${task.data.activity_money.money}元\n`
 
       resolve()
     })
