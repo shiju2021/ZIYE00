@@ -49,13 +49,12 @@ cron设置30min循环
 const jsname = '葱花视频'
 const $ = Env(jsname)
 const logs = $.getdata('logbutton'); //0为关闭日志，1为开启,默认为0
+const notify = $.isNode() ? require('./sendNotify') : '';
 const notifyInterval = $.getdata('tzbutton'); //0为关闭通知，1为所有通知,默认为0
-now = new Date(new Date().getTime() + new Date().getTimezoneOffset()*60*1000 + 8*60*60*1000);
 
 let task = '';
 let tz = '';
-//修改一下填入自己的uid
-let uid = process.env.UID
+let uid = '384591'
 let headerVal = {
   'User-Agent': `cong hua shi pin/1.4.6 (iPhone; iOS 14.1; Scale/2.00)`,
   'Accept': `*/*`,
@@ -66,6 +65,33 @@ let headerVal = {
   'Accept-Language': `zh-Hans-CN;q=1, en-CN;q=0.9`
 };
 
+//time
+var hour = '';
+var minute = '';
+if ($.isNode()) {
+  hour = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).getHours();
+  minute = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).getMinutes();
+} else {
+  hour = (new Date()).getHours();
+  minute = (new Date()).getMinutes();
+}
+
+//time+msg
+async function showmsg() {
+  if (notifyInterval == 1) {
+    if ($.isNode()) {
+      if ((hour == 8 && minute <= 20) || (hour == 12 && minute <= 20) || (hour == 23 && minute <= 20)) {
+        await notify.sendNotify($.name, tz)
+      }
+    } else {
+      if ((hour == 8 && minute <= 20) || (hour == 12 && minute <= 20) || (hour == 23 && minute <= 20)) {
+        $.msg(msgstyle,'',tz);
+      }
+    }
+  } else if (notifyInterval == 0) {
+    console.log(msgstyle + '' + tz);
+  }
+}
 
 const taskcenterbodyArr = [];
 let taskcenterbodyVal = "";
@@ -87,121 +113,138 @@ const readbodyArr = [];
 let readbodyVal = "";
 let READBODY = [];
 
+const callbackurlArr = [];
+let callbackurlVal = "";
+
+const callbackkeyArr = [];
+let callbackkeyVal = "";
+
+const cashbodyArr = [];
+let cashbodyVal = "";
+
+const cashkeyArr = [];
+let cashkeyVal = "";
+
 
 let readscore = 0;
 let sharescore = 0;
+
+let bodys = $.getdata("chgetbody_video");
+let bodys2 = $.getdata("chgetbody_share");
 let indexLast = $.getdata('chgetbody_video_index');
 
 $.begin = indexLast ? parseInt(indexLast, 10) : 1;
 
-  
 if ($.isNode()) {
 
-  // 自定义多 cookie 之间连接的分隔符，默认为 \n 换行分割，不熟悉的不要改动和配置，为了兼容本地 node 执行
-  COOKIES_SPLIT = process.env.COOKIES_SPLIT || "\n";
-  console.log(
-    `============ cookies分隔符为：${JSON.stringify(
-      COOKIES_SPLIT
-    )} =============\n`
-  );
+  bodys='app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiI0Nzc4M2U0N2IzYmQ5YzVkNjExMzMwNTU2NjQyNjRkYSIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJXSUZJIiwidmlkZW9faWQiOiIxMTE3MTk1IiwiY2hhbm5lbCI6IjgwMDAwMDAwIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dnlhdlJaYlBQcmVDeGRvV1ZzcnA1eklGbGdHaUNlYU9pam9tSXBJaG1pS2pJaUxlY3M1alBuSy1HamR5d3FwLVZnSGFlWklDSnFISSIsInVpZCI6IjM4NDU5MSIsIm9zX2FwaSI6IjE0LjMiLCJjYXJyaWVyIjoiJUU0JUI4JUFEJUU1JTlCJUJEJUU4JTgxJTk0JUU5JTgwJTlBIiwib3NfdmVyc2lvbiI6IjE0LjMiLCJkZXZpY2VfbW9kZWwiOiJpUGhvbmUxMyUyQzIiLCJkZXZpY2VfdHlwZSI6ImlPUyIsImRldmljZV9icmFuZCI6IkFwcGxlIiwibWVtb3J5IjoiNEcifQ.BeaC7hmAQvvv1GV_rOZqrr8id40wElr0LCSns_IbdfYN2JAB9SXuKLFHl4IIgEHXyTKzoCSBwxYIi2PmXHxy2Q&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vyavRZbPPreCxdoWVsrp5zIFlgGiCeaOijomIpIhmiKjIiLecs5jPnK-Gjdywqp-VgHaeZICJqHI&token_id=47783e47b3bd9c5d61133055664264da&uid=384591&version_code=1.4.6&video_id=1117195#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=UNKNOWN&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiJjOTM1YzU1ZjFkOTIwM2EzODBhY2M1YTA5MThmZDVjNiIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJVTktOT1dOIiwidmlkZW9faWQiOiIxMDg1MzMyIiwiY2hhbm5lbCI6IjgwMDAwMDAwIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdWQydmhuMmJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHamQ2d3FvM2RnV1ZqYnciLCJ1aWQiOiIzODUwMTIiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.Av6jIsDWTbOsVy7A2Tl8QA0dI2mmk4tFoj-WQLQtk5Vus0LLjr6VcLLuRWEJrE9zvxdMquCzU8z7-sPSp6w7fw&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqud2vhn2bxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGjd6wqo3dgWVjbw&token_id=c935c55f1d9203a380acc5a0918fd5c6&uid=385012&version_code=1.4.6&video_id=1085332#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=UNKNOWN&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiJjOTM1YzU1ZjFkOTIwM2EzODBhY2M1YTA5MThmZDVjNiIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJVTktOT1dOIiwidmlkZW9faWQiOiIxMDcwNTM2IiwiY2hhbm5lbCI6IjgwMDAwMDAwIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdWQydmhuMmJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHamQ2d3FvM2RnV1ZqYnciLCJ1aWQiOiIzODUwMTIiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.xEGG3O64f1Hr3RuOxK_tEDavI9ZRJVgTKyO4Ujyj-7Gg4LEA-QICMwhwJZ7siuz5tHBuIWICCY8TJHjjzk3s3Q&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqud2vhn2bxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGjd6wqo3dgWVjbw&token_id=c935c55f1d9203a380acc5a0918fd5c6&uid=385012&version_code=1.4.6&video_id=1070536#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwNjU1NDEiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.pTDXc2g4yQ-RqHao0NRfb746vEYqRjsfJtxgRFTRiKz7i1rfg8mQ7Z2J4vbmc_IWmHnFUpv7uSSA6OUuYMVTlA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1065541#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODgxMDMiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.8ALTU4AIvlNYxsNTZym8E3cGbmZtmzaKYAN43ltcEYDyn1KYcLPVj1eGcS7EWKixLsU7kW9UM1oRR79AINczmw&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1088103#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODA1MTMiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.blnTFymIVB5rminJ_IjJIeo41_aLiK-BjEhRPUFfWlD9yoCUWidqLRaMKDAhLb44nrsKA2_2QSHC9FZmKTmbvA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1080513#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODcwMjEiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.E_y4HvlM5WB3WL5hLKfqR6Z7sO8CAGUDfTNeT9cuA9kcds1fIz7D3_ZazyJ8FxBSD86iKztjMXMn5knyeA5Chg&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1087021#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODA4NzEiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.QcuTyH7u5w8YbkvbMQBD6B6as2nCAco9p2II1mX7ZZgMANHQHPdrnxb0a_7SSN8m_AoUqPoZsO0NKFgbBOLzLA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1080871#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODE0NzkiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.hBHafDotoPGgDS28P7QxMdkZVFG1CewKGOG1Nj_Bz7SymKsPz8zTipoOcsk3krJXzYsjGAVcxU-Z7xmdt1ZT7A&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1081479#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODE5MzgiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.km7ngIIgA3xW2DqyM-9-tanvatF6hCPSf1rma9T-v0noIoBe6aZDUuu2Kdp3UXdD-n_glunDffSdXNTeoTMx2Q&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6&video_id=1081938'
+  bodys2='app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiI0Nzc4M2U0N2IzYmQ5YzVkNjExMzMwNTU2NjQyNjRkYSIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJXSUZJIiwidmlkZW9faWQiOiIxMTE5NTc3IiwiY2hhbm5lbCI6IjgwMDAwMDAwIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJ0eXBlIjoid3giLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dnlhdlJaYlBQcmVDeGRvV1ZzcnA1eklGbGdHaUNlYU9pam9tSXBJaG1pS2pJaUxlY3M1alBuSy1HamR5d3FwLVZnSGFlWklDSnFISSIsInVpZCI6IjM4NDU5MSIsIm9zX2FwaSI6IjE0LjMiLCJjYXJyaWVyIjoiJUU0JUI4JUFEJUU1JTlCJUJEJUU4JTgxJTk0JUU5JTgwJTlBIiwib3NfdmVyc2lvbiI6IjE0LjMiLCJkZXZpY2VfbW9kZWwiOiJpUGhvbmUxMyUyQzIiLCJkZXZpY2VfdHlwZSI6ImlPUyIsImRldmljZV9icmFuZCI6IkFwcGxlIiwibWVtb3J5IjoiNEcifQ.a2YqEXsixIttz0RpAFgPE4fmJwhq0TLnK1SVuUtwVNQ1gPPIXnsSbzZhbzlQqd60GU-F3_4W3XOGWOiX-S0wFg&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vyavRZbPPreCxdoWVsrp5zIFlgGiCeaOijomIpIhmiKjIiLecs5jPnK-Gjdywqp-VgHaeZICJqHI&token_id=47783e47b3bd9c5d61133055664264da&type=wx&uid=384591&version_code=1.4.6&video_id=1119577#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=UNKNOWN&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiJjOTM1YzU1ZjFkOTIwM2EzODBhY2M1YTA5MThmZDVjNiIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJVTktOT1dOIiwidmlkZW9faWQiOiIxMDcwNTM2IiwiY2hhbm5lbCI6IjgwMDAwMDAwIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJ0eXBlIjoid3giLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdWQydmhuMmJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHamQ2d3FvM2RnV1ZqYnciLCJ1aWQiOiIzODUwMTIiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.7ODcvkFBP78_0t5dyQRg6MC7_wsS3mKZ4wtg8H9Dl_4OFwY3kfpJFLuJz5qdQKg2qLHHdeP7dM7PtlGz24l9Fg&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqud2vhn2bxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGjd6wqo3dgWVjbw&token_id=c935c55f1d9203a380acc5a0918fd5c6&type=wx&uid=385012&version_code=1.4.6&video_id=1070536#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODE0NzkiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJ0eXBlIjoid3giLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.Zazx0g3Rj_ltlNkWLaLF_r0OLO7QQLPxWxeYQq1_mQY42_6kj2mNdnv8Rk49SOyp593qa8vW3DCDUd-9HGhcGA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&type=wx&uid=384591&version_code=1.4.6&video_id=1081479#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODcxMDAiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJ0eXBlIjoid3giLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.qdOvuICtz3KaEhkG6OqHBBMlAgVYSVICTACOTRSDOUkCzlGVZa4670YQVdA-1hrXmfxqkFteNUSevyTAmrva7Q&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&type=wx&uid=384591&version_code=1.4.6&video_id=1087100#app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ2ZXJzaW9uX2NvZGUiOiIxLjQuNiIsImxhbmd1YWdlIjoiemgtQ04iLCJ0b2tlbl9pZCI6ImQ1MDZjZmU3NjE3NzJjYTkwZmYzNGRlMWI3ZWM1ZmNhIiwic3RvcmFnZSI6IjEyMEciLCJhcHBfbmFtZSI6Im9uaW9uX3ZpZGVvIiwiYXBwX3ZlcnNpb24iOiIxLjQuNiIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJ2aWRlb19pZCI6IjEwODE5MzgiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJ0eXBlIjoid3giLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJ1aWQiOiIzODQ1OTEiLCJvc19hcGkiOiIxNC4zIiwiY2FycmllciI6IiVFNCVCOCVBRCVFNSU5QiVCRCVFOCU4MSU5NCVFOSU4MCU5QSIsIm9zX3ZlcnNpb24iOiIxNC4zIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIiwiZGV2aWNlX3R5cGUiOiJpT1MiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm1lbW9yeSI6IjRHIn0.pf14GBz4sWzzDofNisH7A2-s1PCVjHaK23uLA3XXmLuDNKXb3CgoubK9D4uOMBpxv4M3Dphe5kdRUaEjFQKg8Q&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&type=wx&uid=384591&version_code=1.4.6&video_id=1081938'
+  taskcenterbodyArr.push('app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiI0Nzc4M2U0N2IzYmQ5YzVkNjExMzMwNTU2NjQyNjRkYSIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJXSUZJIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dnlhdlJaYlBQcmVDeGRvV1ZzcnA1eklGbGdHaUNlYU9pam9tSXBJaG1pS2pJaUxlY3M1alBuSy1HamR5d3FwLVZnSGFlWklDSnFISSIsInVpZCI6IjM4NDU5MSIsIm9zX2FwaSI6IjE0LjMiLCJjYXJyaWVyIjoiJUU0JUI4JUFEJUU1JTlCJUJEJUU4JTgxJTk0JUU5JTgwJTlBIiwib3NfdmVyc2lvbiI6IjE0LjMiLCJkZXZpY2VfbW9kZWwiOiJpUGhvbmUxMyUyQzIiLCJkZXZpY2VfdHlwZSI6ImlPUyIsImRldmljZV9icmFuZCI6IkFwcGxlIiwibWVtb3J5IjoiNEcifQ.W2rut8fkIiCPpkmId5cmPHJfbfOpS8hFmMXoT8bk3Pzco68d7I2HYoE3446hNYSsNtG20uHvaFhnJUHvu0wvXA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vyavRZbPPreCxdoWVsrp5zIFlgGiCeaOijomIpIhmiKjIiLecs5jPnK-Gjdywqp-VgHaeZICJqHI&token_id=47783e47b3bd9c5d61133055664264da&uid=384591&version_code=1.4.6');
+  sharerewardbodyArr.push('app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_id=52102&device_model=iPhone13%2C2&device_type=iOS&fp=D2A92qjf%2BoPncRukI2VgFPqlwbSKpyKZPRECXmh7wlq7AX21&language=zh-CN&memory=4G&network_type=UNKNOWN&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJmcCI6IkQyQTkycWpmJTJCb1BuY1J1a0kyVmdGUHFsd2JTS3B5S1pQUkVDWG1oN3dscTdBWDIxIiwidmVyc2lvbl9jb2RlIjoiMS40LjYiLCJsYW5ndWFnZSI6InpoLUNOIiwidG9rZW5faWQiOiI0Nzc4M2U0N2IzYmQ5YzVkNjExMzMwNTU2NjQyNjRkYSIsInN0b3JhZ2UiOiIxMjBHIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJuZXR3b3JrX3R5cGUiOiJVTktOT1dOIiwiZGV2aWNlX2lkIjoiNTIxMDIiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dnlhdlJaYlBQcmVDeGRvV1ZzcnA1eklGbGdHaUNlYU9pam9tSXBJaG1pS2pJaUxlY3M1alBuSy1HamR5d3FwLVZnSGFlWklDSnFISSIsInVpZCI6IjM4NDU5MSIsIm9zX2FwaSI6IjE0LjMiLCJjYXJyaWVyIjoiJUU0JUI4JUFEJUU1JTlCJUJEJUU4JTgxJTk0JUU5JTgwJTlBIiwib3NfdmVyc2lvbiI6IjE0LjMiLCJkZXZpY2VfbW9kZWwiOiJpUGhvbmUxMyUyQzIiLCJkZXZpY2VfdHlwZSI6ImlPUyIsImRldmljZV9icmFuZCI6IkFwcGxlIiwibWVtb3J5IjoiNEcifQ.qfw9qZQUIPdX9ZKxom0Y2_XWH5xRuT9OwxUT4HrbfVnalcPCybQ9-4mt-pDmJdRJdVQ-XPPQJQ8UZXNrk5Tdlw&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vyavRZbPPreCxdoWVsrp5zIFlgGiCeaOijomIpIhmiKjIiLecs5jPnK-Gjdywqp-VgHaeZICJqHI&token_id=47783e47b3bd9c5d61133055664264da&uid=384591&version_code=1.4.6');
+  timeredbodyArr.push('app_name=onion_video&app_version=1.4.6&carrier=%E4%B8%AD%E5%9B%BD%E8%81%94%E9%80%9A&channel=80000000&device_brand=Apple&device_model=iPhone13%2C2&device_type=iOS&language=zh-CN&memory=4G&network_type=WIFI&openudid=00000000-0000-0000-0000-000000000000&os_api=14.3&os_version=14.3&resolution=1170%2A2532&sign=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJvc19hcGkiOiIxNC4zIiwidWlkIjoiMzg0NTkxIiwiYXBwX25hbWUiOiJvbmlvbl92aWRlbyIsImFwcF92ZXJzaW9uIjoiMS40LjYiLCJjaGFubmVsIjoiODAwMDAwMDAiLCJkZXZpY2VfYnJhbmQiOiJBcHBsZSIsIm5ldHdvcmtfdHlwZSI6IldJRkkiLCJvcGVudWRpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsImRldmljZV90eXBlIjoiaU9TIiwidG9rZW5faWQiOiJkNTA2Y2ZlNzYxNzcyY2E5MGZmMzRkZTFiN2VjNWZjYSIsInRva2VuIjoiTURBd01EQXdNREF3TUx5Nm85eUJvS2VzZ3AtQmIzNmdqS21LZG45dng0WFJyYk9xdFpleGhubWJ4dUNqbDRHYmZacU5mSWFmbVhtaXJZcUdmMl9IaGRHcnN0Q3AzYkdHaVpheHFuMlZnV1ZqYnciLCJsYW5ndWFnZSI6InpoLUNOIiwibWVtb3J5IjoiNEciLCJzdG9yYWdlIjoiMTIwRyIsInZlcnNpb25fY29kZSI6IjEuNC42Iiwib3NfdmVyc2lvbiI6IjE0LjMiLCJyZXNvbHV0aW9uIjoiMTE3MCUyQTI1MzIiLCJjYXJyaWVyIjoiJUU0JUI4JUFEJUU1JTlCJUJEJUU4JTgxJTk0JUU5JTgwJTlBIiwiZGV2aWNlX21vZGVsIjoiaVBob25lMTMlMkMyIn0.NQjSM8MS5exUAYqoaY7BnDEV3gQswNM6hQ3YFL6fl5eCdlEUW_Tc8uf7w_V6T36nUamq3tg2hQO89luyEsc_pA&storage=120G&token=MDAwMDAwMDAwMLy6o9yBoKesgp-Bb36gjKmKdn9vx4XRrbOqtZexhnmbxuCjl4GbfZqNfIafmXmirYqGf2_HhdGrstCp3bGGiZaxqn2VgWVjbw&token_id=d506cfe761772ca90ff34de1b7ec5fca&uid=384591&version_code=1.4.6');
 
 
-  if (process.env.READBODY && process.env.READBODY.indexOf('#') > -1) {
-    readbodyVal = process.env.READBODY.split('#');
-    console.log(`您选择的是用"#"隔开\n`)
-  } else if (process.env.READBODY && process.env.READBODY.indexOf('\n') > -1) {
-    readbodyVal = process.env.READBODY.split('\n');
-    console.log(`您选择的是用换行隔开\n`)
-  } else {
-    readbodyVal = process.env.READBODY.split()
-  }
-  
-  if (process.env.SHAREBODY && process.env.SHAREBODY.indexOf('#') > -1) {
-    sharebodyVal = process.env.SHAREBODY.split('#');
-    console.log(`您选择的是用"#"隔开\n`)
-  } else if (process.env.SHAREBODY && process.env.SHAREBODY.indexOf('\n') > -1) {
-    sharebodyVal = process.env.SHAREBODY.split('\n');
-    console.log(`您选择的是用换行隔开\n`)
-  } else {
-    sharebodyVal = process.env.SHAREBODY.split()
-  }
-   
- 
-  if (
-    process.env.TASKCENTERBODY &&
-    process.env.TASKCENTERBODY.indexOf(COOKIES_SPLIT) > -1
-  ) {
-    taskcenterbodyVal = process.env.TASKCENTERBODY.split(COOKIES_SPLIT);
-  } else {
-    taskcenterbodyVal = process.env.TASKCENTERBODY.split();
-  }
-
-  if (
-    process.env.SHAREREWARDBODY &&
-    process.env.SHAREREWARDBODY.indexOf(COOKIES_SPLIT) > -1
-  ) {
-    sharerewardbodyVal = process.env.SHAREREWARDBODY.split(COOKIES_SPLIT);
-  } else {
-    sharerewardbodyVal = process.env.SHAREREWARDBODY.split();
-  }
-
-  if (
-    process.env.TIMEREDBODY &&
-    process.env.TIMEREDBODY.indexOf(COOKIES_SPLIT) > -1
-  ) {
-    timeredbodyVal = process.env.TIMEREDBODY.split(COOKIES_SPLIT);
-  } else {
-    timeredbodyVal = process.env.TIMEREDBODY.split();
-  }
 
 }
 
+if (!(bodys && bodys != '')) {
+  $.msg("", "", '请先-观看视频-获取请求体,body容易失效建议50个...')
+  $.done()
+}
 
+if (!(bodys2 && bodys2 != '')) {
+  $.msg("", "", '请先-分享视频-获取请求体,只能3个！3个！3个！')
+  $.done()
+}
+
+readbodyVal = bodys.split('#');
+sharebodyVal = bodys2.split('#');
+
+////////////////////////////////////////////////////////////////////////
+
+Object.keys(readbodyVal).forEach((item) => {
+  if (readbodyVal[item]) {
+    readbodyArr.push(readbodyVal[item])
+  }
+})
+
+Object.keys(sharebodyVal).forEach((item) => {
+  if (sharebodyVal[item]) {
+    sharebodyArr.push(sharebodyVal[item])
+  }
+})
 
 
 if ($.isNode()) {
-  
-   Object.keys(sharebodyVal).forEach((item) => {
-      if (sharebodyVal[item]) {
-       sharebodyArr.push(sharebodyVal[item])
-      }
-  });
-  
-    Object.keys(taskcenterbodyVal).forEach((item) => {
+
+  Object.keys(taskcenterbodyVal).forEach((item) => {
     if (taskcenterbodyVal[item]) {
       taskcenterbodyArr.push(taskcenterbodyVal[item])
     }
   });
 
-   Object.keys(sharerewardbodyVal).forEach((item) => {
+  Object.keys(sharerewardbodyVal).forEach((item) => {
     if (sharerewardbodyVal[item]) {
       sharerewardbodyArr.push(sharerewardbodyVal[item])
     }
   });
-  
-   Object.keys(readbodyVal).forEach((item) => {
-    if (readbodyVal[item]) {
-      readbodyArr.push(readbodyVal[item])
-    }
-  });
-  
-   Object.keys(timeredbodyVal).forEach((item) => {
+
+  Object.keys(timeredbodyVal).forEach((item) => {
     if (timeredbodyVal[item]) {
       timeredbodyArr.push(timeredbodyVal[item])
     }
   });
-  
 
-} 
+  Object.keys(callbackkeyVal).forEach((item) => {
+    if (callbackkeyVal[item]) {
+      callbackkeyArr.push(callbackkeyVal[item])
+    }
+  });
 
-////////////////////////////////////////////////////////////////////////以上是对cookie的处理，一般更行只要更行以下部分///////////////////////////////////////////////////
+  Object.keys(cashbodyVal).forEach((item) => {
+    if (cashbodyVal[item]) {
+      cashbodyArr.push(cashbodyVal[item])
+    }
+  });
+
+  Object.keys(cashkeyVal).forEach((item) => {
+    if (cashkeyVal[item]) {
+      cashkeyArr.push(cashkeyVal[item])
+    }
+  });
+
+  Object.keys(callbackurlVal).forEach((item) => {
+    if (callbackurlVal[item]) {
+      callbackurlArr.push(callbackurlVal[item])
+    }
+  });
+
+} else {
+  //readbodyArr.push($.getdata('chgetbody_video'));
+  //sharebodyArr.push($.getdata('chgetbody_share'));
+  taskcenterbodyArr.push($.getdata('chgetbody_taskcenter'));
+  sharerewardbodyArr.push($.getdata('chgetbody_sharereward'));
+  timeredbodyArr.push($.getdata('chgetbody_timered'));
+  callbackkeyArr.push($.getdata('callbackkey'));
+  cashbodyArr.push($.getdata('cashbody'));
+  cashkeyArr.push($.getdata('cashkey'));
+  callbackurlArr.push($.getdata('callbackurl'));
+}
+
+
+////////////////////////////////////////////////////////////////////////
 
 
 !(async () => {
-     await Jsname()
-  O = (`🥦${jsname}任务执行通知🔔`);
+  await Jsname()
+  msgstyle = (`🥦${jsname}任务执行通知🔔`);
   taskcenterbodyVal = taskcenterbodyArr[0];
   timeredbodyVal = timeredbodyArr[0];
+  callbackurlVal = callbackurlArr[0];
+  callbackkeyVal = callbackkeyArr[0];
+  cashbodyVal = cashbodyArr[0];
+  cashkeyVal = cashkeyArr[0];
+
   console.log(`\n✅ 查询账户明细\n`)
   if (uid >= 1) {
     await todaycoin(); //box填入uid
@@ -215,16 +258,30 @@ if ($.isNode()) {
     );
   }
 
-  if (now.getHours() == 18){
-    await videoread();//自动刷视频
-  }else if (now.getHours() == 20){
-    await videoread();//自动刷视频
-  }else{
+  if (hour == 8 || hour == 12 || hour == 23) {
+    await videoread(); //自动刷视频
+  }else if(hour <= 17) {
     console.log(`\n✅ 打印任务状态清单`)
     await taskcenter(); //任务中心
     console.log(`\n✅ 执行时段奖励任务`)
     await timered(task); //时段奖励
-    await sharevideo();//分享任务
+    await sharevideo(); //分享任务
+  //}else if((hour == 0 && minute <= 21)) {
+    //console.log(`\n✅ 执行助力任务`)
+    //await callback();
+    //if(mycash == 50000){
+          //console.log(`\n✅ 执行提现任务`)
+          //await todaycoin();
+          //await cash();
+          //tz += `【5元提现】：成功🎉\n`;
+    //}else{
+      //console.log(`\n💸 金币未满提现5元额度`)
+      //tz += `【5元提现】：金币未满提现5元额度\n`;
+    //}
+
+  }else{
+    console.log(`\n✅时段奖励与分享奖励已达上限,\n等待晚上11点执行自动阅读任务`)
+    tz += `\n✅时段奖励与分享奖励已达上限,\n等待晚上11点执行自动阅读任务`;
   }
   await showmsg();
 
@@ -232,18 +289,71 @@ if ($.isNode()) {
 .catch((e) => $.logErr(e))
   .finally(() => $.done())
 
-function showmsg() {
-  if (notifyInterval != 1) {
-    console.log(O + '' + tz);
-  }
 
-  if (notifyInterval == 1) {
-    $.msg(O, '', tz);
-  }
-}
 
 ////////////////////////////////////////////////////////////////////////
-async function videoread(){
+//助力分享
+async function callback() {
+  return new Promise((resolve) => {
+    let url = {
+      url: `callbackurlVal`,
+      body: ``,
+      headers: JSON.parse(callbackkeyVal),
+    };
+    $.get(url, async (err, resp, data) => {
+      try {
+        if (err) {
+          console.log("⛔️API查询请求失败❌ ‼️‼️");
+          console.log(JSON.stringify(err));
+          $.logErr(err);
+        } else {
+          if (safeGet(data)) {
+            if (logs == 1) $.log(data)
+            $.log(data)
+            data = JSON.parse(data);
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp);
+      } finally {
+        resolve();
+      }
+    });
+  });
+}
+
+//提现cash
+async function cash() {
+  return new Promise((resolve) => {
+    let url = {
+      url: `https://app.kxp.com/withdrawal/v2/wechat/exchange`,
+      body: cashbodyVal,
+      headers: JSON.parse(cashkeyVal),
+    };
+    $.post(url, async (err, resp, data) => {
+      try {
+        if (err) {
+          console.log("⛔️API查询请求失败❌ ‼️‼️");
+          console.log(JSON.stringify(err));
+          $.logErr(err);
+        } else {
+          if (safeGet(data)) {
+            if (logs == 1) $.log(data)
+            $.log(data)
+            data = JSON.parse(data);
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp);
+      } finally {
+        resolve();
+      }
+    });
+  });
+}
+
+
+async function videoread() {
   if (!readbodyArr[0]) {
     console.log($.name, '【提示】请把阅读视频的请求体填入Github 的 Secrets 中，请以#隔开')
     return;
@@ -261,7 +371,7 @@ async function videoread(){
   $.log('', '', `🥦 本次共完成${$.index}次阅读，获得${readscore}个金币，阅读请求结束`);
   tz += `【自动阅读】：${readscore}个金币\n`;
 }
-async function sharevideo(){
+async function sharevideo() {
   if (!sharebodyArr[0]) {
     console.log($.name, '【提示】请把分享视频的请求体填入Github 的 Secrets 中，请以#隔开')
     return;
@@ -280,8 +390,6 @@ async function sharevideo(){
   }
 
 }
-
-
 
 //任务中心
 function taskcenter() {
@@ -321,10 +429,13 @@ function todaycoin() {
     }
     $.post(todaycoinurl, async (error, resp, data) => {
       let todaycoin = JSON.parse(data);
-      $.log(`【今日金币】：${todaycoin.data.today_score}个金币🏅`);
-      $.log(`【账户金币】：${todaycoin.data.score}个金币🏅,折算${todaycoin.data.money}`);
-      $.log(`【获取金币总计】：${todaycoin.data.total_score}个金币🏅`);
-      tz += `【今日金币】：${todaycoin.data.today_score}个金币\n`;
+      mycash = todaycoin.data.score
+      $.log(`【今日金币】：${todaycoin.data.today_score}金币`);
+      $.log(`【账户金币】：${todaycoin.data.score}金币,${todaycoin.data.money}`);
+      $.log(`【获取总计】：${todaycoin.data.total_score}金币`);
+      tz += `【今日金币】：${todaycoin.data.today_score}金币\n`;
+      tz += `【账户金币】：${todaycoin.data.score}金币,${todaycoin.data.money}\n`;
+      tz += `【获取总计】：${todaycoin.data.total_score}金币\n`;
       resolve()
     })
   })
@@ -344,7 +455,7 @@ function share(task) {
         let share = JSON.parse(data);
         //$.log(`\n本次阅读获得${share.data.score}个金币🏅\n`);
         //sharescore += share.data.score;
-        if(logs==1) $.log(data)
+        if (logs == 1) $.log(data)
         $.log(`分享任务奖励请求：成功🎉`);
         resolve()
       })
@@ -364,11 +475,11 @@ function sharereward(task) {
       $.post(sharerewardurl, async (error, resp, data) => {
         let sharereward = JSON.parse(data);
         if (sharereward.code === 1007) {
-          if(logs==1) $.log(data)
+          if (logs == 1) $.log(data)
           $.log(`【分享奖励】：账号异常❌\n请评论,点赞,上传视频...并禁用脚本观察`)
           tz += `【分享奖励】：账号异常❌\n`;
         } else {
-          if(logs==1) $.log(data)
+          if (logs == 1) $.log(data)
           $.log(`本次任务获得${sharereward.data.score}个金币🏅`);
           tz += `【分享任务】：${sharescore}个金币\n`;
           sharescore += sharereward.data.score;
@@ -392,16 +503,15 @@ function timered(task) {
         headers: headerVal,
       };
       $.post(timeredurl, async (error, response, data) => {
-        let timered = JSON.parse(data)
-        nexttime = (timered.data.remain_time)*1000
+          timered = JSON.parse(data)
+
         if (timered.code === 1007) {
-          if(logs==1) $.log(data)
-          $.log(`【时段奖励】：账号异常❌\n请评论,点赞,上传视频...并禁用脚本观察`)
-          tz += `【时段奖励】：账号异常❌\n`;
+          if (logs == 1) $.log(data)
+          $.log(`【时段奖励】：领取失败,已达上限❌`)
+          tz += `【时段奖励】：领取失败,已达上限❌\n`;
         } else {
-          if(logs==1) $.log(data)
+          if (logs == 1) $.log(data)
           $.log(`【时段奖励】：获取${timered.data.score}金币`);
-          $.log(`【下个时段】：`+ time(nexttime));
           tz += `【时段奖励】：${timered.data.score}金币\n`;
         }
 
@@ -429,15 +539,17 @@ function AutoRead() {
       $.setdata(res + "", 'chgetbody_body_index');
       let readres = JSON.parse(data);
       if (readres.code == '100006') {
-        if(logs==1) $.log(data)
+        if (logs == 1) $.log(data)
         $.log(`⛔️第${$.index}次-获取金币已达上限🥺,明日在来！`)
       } else if (readres.code == '1007') {
-        if(logs==1) $.log(data)
+        if (logs == 1) $.log(data)
         $.log(`【本次阅读${$.index}】：账号异常❌\n请评论,点赞,上传视频...并禁用脚本观察`)
         tz += `【本次阅读${$.index}】：账号异常❌\n`;
       } else if (typeof readres.data.score === 'number') {
-        if(logs==1) $.log(data)
-        await $.wait(30000);
+        if (logs == 1) $.log(data)
+        let randomtime = Randomtime(21000,60000) / 1000
+        await $.wait(Randomtime(21000,60000));
+        console.log(`【随机延迟🕑】:${Math.round(randomtime)}秒...`);
         $.log(`【本次阅读】：${readres.data.score}个金币🏅`);
         readscore += readres.data.score;
 
@@ -448,19 +560,34 @@ function AutoRead() {
 }
 
 // prettier-ignore
-function Jsname(){
+function Jsname() {
 
-$.log(`┎━━┰┒┎┰━━┰━━┰━━┰┒┎┰┒┎┰━━┒`)
-$.log(`│┎━┦┕┚│┎┒│┎┒│┎┰┦┕┚││││┎┒│`)
-$.log(`│┕━┦┎┒│┕┚││││┕┚│┎┒│┕┚│┎┒│`)
-$.log(`┕━━┹┚┕┹━━┹┚┕┹━━┹┚┕┹━━┹┚┕┚`)
+  $.log(`┎━━┰┒┎┰━━┰━━┰━━┰┒┎┰┒┎┰━━┒`)
+  $.log(`│┎━┦┕┚│┎┒│┎┒│┎┰┦┕┚││││┎┒│`)
+  $.log(`│┕━┦┎┒│┕┚││││┕┚│┎┒│┕┚│┎┒│`)
+  $.log(`┕━━┹┚┕┹━━┹┚┕┹━━┹┚┕┹━━┹┚┕┚`)
 
 }
-
+function Randomtime(mintime, maxtime) {
+    return Math.round(Math.random() * (maxtime - mintime)) + mintime;
+}
 
 function time(time) {
   var date = new Date(time + 8 * 3600 * 1000);
   return date.toJSON().substr(0, 19).replace('T', ' ').replace(/-/g, '.');
+}
+
+//安全获取
+function safeGet(data) {
+  try {
+    if (typeof JSON.parse(data) == "object") {
+      return true;
+    }
+  } catch (e) {
+    console.log(e);
+    console.log(`⛔️服务器访问数据为空，请检查自身设备网络情况`);
+    return false;
+  }
 }
 
 function Env(t, e) {
