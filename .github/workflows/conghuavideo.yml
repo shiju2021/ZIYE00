@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   # 目前运行3000金币左右上限，body不用抓太多没有意义,cron自己看着写
   schedule:
-     - cron: '50 8-19 * * *'
+     - cron: '0 8-20/2 * * *'
   watch:
     types: started
   repository_dispatch:
