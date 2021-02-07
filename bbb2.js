@@ -31,7 +31,7 @@ hostname = bububao.duoshoutuan.com,
 const $ = new Env('步步寶')
 let notice = ''
 //let CookieVal = $.getdata('bbb_ck')
-let CookieVal = process.env.BBBCK
+let CookieVal = process.env.BBBCK0
 
 
 ///////////////////////////////////////////////////以上为cookie的取值，cookie不变不用改////////////////////////////
