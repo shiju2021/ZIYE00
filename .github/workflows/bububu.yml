@@ -24,4 +24,4 @@ jobs:
               run: |
                   node bbb007.js
               env:
-                  BBBCK: ${{ secrets.BBBCK3 }}
+                  BBBCK3: ${{ secrets.BBBCK3 }}
