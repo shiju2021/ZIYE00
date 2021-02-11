@@ -39,8 +39,8 @@ jobs:
         run: |
           node Task/duokandian.js
         env:
-        #XP_iboxpayHEADER: ${{ secrets.XP_IBOXPAYHEADER }}
-        #XP_refreshTOKEN: ${{ secrets.XP_REFRESHTOKEN }}
+        DKD_duokandianBODY: ${{ secrets.DKD_duokandianBODY }}
+        DKD_duokandianvideoBODY: ${{ secrets.DKD_duokandianvideoBODY }}
           #GOLDBODY: ${{ secrets.GOLDBODY}}
          #PUSH_KEY: ${{ secrets.PUSH_KEY }}
           #BARK_PUSH: ${{ secrets.BARK_PUSH }}
