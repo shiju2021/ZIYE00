@@ -22,6 +22,6 @@ jobs:
                   npm install
             - name: "运行【步步宝mama】"
               run: |
-                  node bbbma.js
+                  node bbb.js
               env:
-                  BBBCK3: ${{ secrets.BBBCK5 }}
+                  BBBCK: ${{ secrets.BBBCK5 }}
