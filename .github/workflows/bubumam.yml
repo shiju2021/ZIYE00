@@ -3,7 +3,7 @@ name: 步步宝mama
 on:
     workflow_dispatch:
     schedule:
-        - cron: "45 5-20 * * *"
+        - cron: "45 5-12/3 * * *"
     watch:
         types: [started]
 
