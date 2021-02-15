@@ -13,8 +13,6 @@ boxjs链接  https://raw.githubusercontent.com/ziye12/JavaScript/main/Task/ziye.
 2.10 增加看视频，基本完善
 2.11 完善判定
 2.11-2  修复视频和广告以及提现判定问题
-2.12 增加碎片显示以及兑换
-2.14 修复宝箱问题
 
 ⚠️一共1个位置 1个ck  👉 2条 Secrets
 多账号换行
@@ -223,9 +221,7 @@ function daytime(inputTime) {
 };
 //时间戳格式化日期
 function time(inputTime) {
-    if ($.isNode()) {
-        var date = new Date(inputTime + 8 * 60 * 60 * 1000);
-    } else var date = new Date(inputTime);
+    var date = new Date(inputTime);
     Y = date.getFullYear() + '-';
     M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-';
     D = date.getDate() + ' ';
@@ -296,10 +292,6 @@ async function all() {
         if ($.lottoindex.data && $.lottoindex.data.times >= 1) {
             await lotto(); //转盘抽奖
         }
-        if ($.lottoindex.data && $.lottoindex.data.chip >= 4) {
-            await chip(); //碎片兑换
-        }
-
         if (gg && gg.status != 2) {
             await advideo(); //广告视频
             await extratime(); //时段刷新
@@ -307,17 +299,9 @@ async function all() {
                 await timeaward(); //时段奖励
                 await timeawardsss(); //时段翻倍
             }
-            await extrabox(); //宝箱刷新
             await boxaward(); //宝箱奖励
             await boxbox(); //宝箱翻倍
         }
-        if (gg && gg.status == 2) {
-            console.log(`【时段奖励】：已完成\n`);
-            $.message += `【时段奖励】：已完成\n`
-            console.log(`【宝箱奖励】：已完成\n`);
-            $.message += `【宝箱奖励】：已完成\n`
-        }
-
         if (sp && sp.status == 1) {
             await spaward(); //视频达成
         }
@@ -341,22 +325,15 @@ async function all() {
             await tx(); //提现
         }
 
-
+        console.log(`【视频统计】：共有${videoBODY.length}个body,预计运行${tt}秒\n`);
+        $.message += `【视频统计】：共有${videoBODY.length}个body,预计运行${tt}秒\n`
 
         if (videoBODY.length != 0 && sp && sp.status != 2) {
-            console.log(`【视频统计】：共有${videoBODY.length}个body,预计运行${tt}秒\n`);
-            $.message += `【视频统计】：共有${videoBODY.length}个body,预计运行${tt}秒\n`
-
             await video(); //刷视频
             await $.wait(tt * 1000)
         }
 
 
-        if (videoBODY.length != 0 && sp && sp.status == 2) {
-            console.log(`【视频统计】：共有${videoBODY.length}个body,已完成\n`);
-            $.message += `【视频统计】：共有${videoBODY.length}个body,已完成\n`
-
-        }
 
 
     }
@@ -434,8 +411,8 @@ function days(timeout = 0) {
 
                         if ($.days.data && $.days.status_code == 200) {
 
-                           // console.log(`【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】 ：${gg.task_go}， ${gg.award}金币\n`);
-                            //$.message += `【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】：${gg.task_go}， ${gg.award}金币\n`;
+                            //console.log(`【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】 ：${gg.task_go}， ${gg.award}金币\n`);
+                           // $.message += `【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】：${gg.task_go}， ${gg.award}金币\n`;
                             if (yi.status == 2) {
                                 console.log(`【日常任务1】：任务完成 ${yi.award}金币\n`);
                                 $.message += `【日常任务1】：任务完成 ${yi.award}金币\n`;
@@ -567,14 +544,10 @@ function lottoindex(timeout = 0) {
                     if ($.lottoindex.data && $.lottoindex.status_code == 200) {
                         console.log(`【抽奖次数】：剩余${$.lottoindex.data.times}次\n`);
                         $.message += `【抽奖次数】：剩余${$.lottoindex.data.times}次\n`;
-                        console.log(`【碎片信息】：剩余${$.lottoindex.data.chip}个\n`);
-                        $.message += `【碎片信息】：剩余${$.lottoindex.data.chip}个\n`;
                     }
                     if ($.lottoindex.status_code == 10020) {
                         console.log(`【抽奖次数】：${$.lottoindex.message}\n`);
                         $.message += `【抽奖次数】：${$.lottoindex.message}\n`;
-                        console.log(`【碎片信息】：${$.lottoindex.message}\n`);
-                        $.message += `【碎片信息】：${$.lottoindex.message}\n`;
                     }
                 } catch (e) {
                     $.logErr(e, resp);
@@ -616,40 +589,6 @@ function lotto(timeout = 0) {
         }, timeout)
     })
 }
-//碎片兑换
-function chip(timeout = 0) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let url = {
-                url: `http://dkd-api.dysdk.com/lotto/convert?${duokandianbodyVal}`,
-                headers: duokandianheaderVal,
-                body: {
-                    "id": 4
-                },
-            }
-            $.post(url, async (err, resp, data) => {
-                try {
-                    if (logs) $.log(`${O}, 碎片兑换🚩: ${data}`);
-                    $.chip = JSON.parse(data);
-                    A = 1
-                    if ($.chip.data && $.chip.status_code == 200) {
-                        console.log(`【碎片兑换】：奖励 ${$.chip.data.award}金币\n`);
-                        $.message += `【碎片兑换】：奖励 ${$.chip.data.award}金币\n`;
-                    }
-                    if ($.chip.status_code == 10020) {
-                        console.log(`【碎片兑换】：${$.chip.message}\n`);
-                        $.message += `【碎片兑换】：${$.chip.message}\n`;
-                    }
-                } catch (e) {
-                    $.logErr(e, resp);
-                } finally {
-                    resolve()
-                }
-            })
-        }, timeout)
-    })
-}
-
 //广告视频
 function advideo(timeout = 0) {
     return new Promise((resolve) => {
@@ -770,41 +709,6 @@ function timeawardsss(timeout = 0) {
         }, timeout)
     })
 }
-
-//宝箱刷新
-function extrabox(timeout = 0) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let url = {
-                url: `http://dkd-api.dysdk.com/red/box_init`,
-                headers: duokandianheaderVal,
-                body: duokandianbodyVal,
-            }
-            $.post(url, async (err, resp, data) => {
-                try {
-                    if (logs) $.log(`${O}, 时段刷新🚩: ${data}`);
-                    $.extrabox = JSON.parse(data);
-                    if ($.extrabox.status_code == 200) {
-                        console.log(`【宝箱刷新】：刷新成功,剩余${$.extrabox.data.diff}秒\n`);
-                        $.message += `【宝箱刷新】：刷新成功,剩余${$.extrabox.data.diff}秒\n`;
-                    }
-                    if ($.extrabox.status_code == 10020) {
-                        console.log(`【宝箱刷新】：${$.extrabox.message}\n`);
-                        $.message += `【宝箱刷新】：${$.extrabox.message}\n`;
-                    }
-                } catch (e) {
-                    $.logErr(e, resp);
-                } finally {
-                    resolve()
-                }
-            })
-        }, timeout)
-    })
-}
-
-
-
-
 //宝箱奖励
 function boxaward(timeout = 0) {
     return new Promise((resolve) => {
