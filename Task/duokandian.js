@@ -411,8 +411,8 @@ function days(timeout = 0) {
 
                         if ($.days.data && $.days.status_code == 200) {
 
-                            console.log(`【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】 ：${gg.task_go}， ${gg.award}金币\n`);
-                            $.message += `【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】：${gg.task_go}， ${gg.award}金币\n`;
+                            //console.log(`【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】 ：${gg.task_go}， ${gg.award}金币\n`);
+                            //$.message += `【${sp.title}】：${sp.task_go}， ${sp.award}金币\n【${gg.title}】：${gg.task_go}， ${gg.award}金币\n`;
                             if (yi.status == 2) {
                                 console.log(`【日常任务1】：任务完成 ${yi.award}金币\n`);
                                 $.message += `【日常任务1】：任务完成 ${yi.award}金币\n`;
