@@ -298,7 +298,7 @@ async function all() {
             await lotto(); //转盘抽奖
         }
         if ($.lottoindex.data && $.lottoindex.data.chip >= 4) {
-            await chip(); //碎片兑换
+            //await chip(); //碎片兑换
         }
 
         if (gg && gg.status != 2) {
